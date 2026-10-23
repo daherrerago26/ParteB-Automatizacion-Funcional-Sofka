@@ -1,0 +1,48 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// Karate recomienda dejar los .feature, .json y .js junto a las clases en src/test/java; se publican como recursos de test
+sourceSets {
+    test {
+        resources {
+            srcDir file('src/test/java')
+            exclude '**/*.java'
+        }
+    }
+}
+
+dependencies {
+    testImplementation "io.karatelabs:karate-junit5:${karateVersion}"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junitPlatformVersion}"
+}
+
+test {
+    useJUnitPlatform()
+    // Pasa a la JVM de pruebas el ambiente y el filtro de tags recibidos con -Dkarate.env y -Dkarate.options
+    ['karate.env', 'karate.options'].each { name ->
+        if (System.getProperty(name)) {
+            systemProperty name, System.getProperty(name)
+        }
+    }
+    // Las pruebas consultan una API externa: Gradle nunca debe darlas por actualizadas y saltarlas
+    outputs.upToDateWhen { false }
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat = 'full'
+        showStandardStreams = true
+    }
+}
