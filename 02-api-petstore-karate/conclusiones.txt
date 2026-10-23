@@ -1,0 +1,118 @@
+EJERCICIO 2 - HALLAZGOS Y CONCLUSIONES
+======================================
+
+RESULTADO
+---------
+Los 5 casos del enunciado quedaron automatizados y en verde: crear un usuario, buscarlo,
+actualizar su nombre y su correo, buscarlo actualizado y eliminarlo. El caso de eliminación
+comprueba además que el usuario eliminado responde 404.
+
+- Los 5 escenarios pasaron en las 18 ejecuciones completas del desarrollo, sin ningún fallo,
+  incluidas una desde un clon limpio de la rama y la de evidencia.
+- Los escenarios tardan unos 3,5 segundos; con Gradle, la ejecución completa tarda unos 10.
+- Tiempos de respuesta de la API en la ejecución de evidencia: entre 212 y 486 ms por petición.
+- Para comprobar que las validaciones detectan errores, se cambió a propósito el mensaje esperado
+  del caso de eliminación: la prueba falló con "match failed: EQUALS" y volvió a pasar al
+  restaurarlo.
+
+
+HALLAZGOS SOBRE LA API
+----------------------
+Se encontraron explorando la API antes de automatizar. No se escribieron aserciones sobre ellos,
+porque son comportamientos que la documentación no define o que contradicen lo documentado.
+
+1. La contraseña se devuelve en texto plano (seguridad).
+   GET /user/{username} incluye el campo "password" tal como se envió. Una API real no debería
+   devolver la contraseña, ni siquiera cifrada.
+
+2. Un PUT sobre un usuario que no existe lo crea.
+   La documentación indica 404 "User not found", pero la API responde 200 y crea el usuario.
+
+3. Un PUT puede cambiar el username.
+   Si el body trae un username distinto al del path, el usuario queda renombrado: el username
+   original responde 404 y el nuevo responde 200. El identificador del recurso cambia con una
+   actualización.
+
+4. Se permiten usernames duplicados.
+   Dos POST con el mismo username crean dos usuarios. El GET devuelve el más antiguo y cada DELETE
+   elimina solo uno, así que tras el primer DELETE el username sigue existiendo.
+
+5. No hay validación de datos.
+   Acepta correos sin formato válido ("esto-no-es-correo") y un body vacío ({}) crea un usuario
+   con id 0 y sin username. Solo rechaza un JSON mal formado (400 "bad input").
+
+6. Sin id, la API asigna uno que JavaScript no puede representar.
+   Si el POST no trae id, la API asigna uno cercano al máximo de un long (9223372036854761836),
+   que supera el entero seguro de JavaScript (2^53). Un cliente web leería otro número. Por eso
+   las pruebas envían siempre su propio id, por debajo de ese límite.
+
+7. Códigos y mensajes de respuesta poco consistentes.
+   - POST responde 200 en lugar de 201 Created.
+   - Las respuestas exitosas traen "type": "unknown".
+   - "message" contiene el id en el POST y en el PUT, y el username en el DELETE.
+   - Un DELETE de un usuario inexistente responde 404 sin body, mientras que el GET de un
+     usuario inexistente responde 404 con un JSON de error.
+
+
+DECISIONES DE DISEÑO
+--------------------
+- Datos únicos por escenario: el sandbox es público y compartido, y permite usernames duplicados
+  (hallazgo 4). Cada escenario genera su propio username, id y correos.
+- Limpieza garantizada: cada escenario elimina su usuario al terminar, aunque falle una
+  validación, para no dejar datos en el sandbox.
+- Sin reintentos: antes de automatizar se midieron 20 ciclos seguidos de crear, consultar,
+  actualizar, eliminar y volver a consultar, sin ninguna inconsistencia. Por eso no se agregaron
+  reintentos: ocultarían un fallo real de la API.
+- Escenarios independientes: cada caso crea en su precondición lo que necesita, así se puede
+  ejecutar por separado con su tag y, si uno falla, no afecta a los demás.
+- Validación en tres niveles: código de estado, estructura (esquemas con fuzzy matching de
+  Karate) y valores exactos (lo que se consulta es lo que se envió o actualizó).
+
+
+CONCLUSIONES
+------------
+- Los 5 casos del enunciado funcionan de punta a punta y cada uno documenta sus entradas, sus
+  salidas, sus validaciones y sus variables.
+- Karate permite escribir las pruebas de API sin código Java de apoyo: las variables, las
+  plantillas de datos, la validación de esquemas y la captura del request y el response en el
+  reporte son nativos.
+- La API cumple el flujo feliz, pero tiene debilidades de seguridad (contraseña expuesta), de
+  integridad (usernames duplicados, PUT que crea o renombra) y de validación de datos. En un
+  proyecto real, los hallazgos 1 a 4 deberían reportarse como defectos.
+
+
+RESUMEN DE LOS CASOS
+--------------------
+1. Crear un usuario (@createUser)
+   Entrada:      POST /user con el usuario "Dani Herrera" (username, id y correo únicos).
+   Salida:       200 y {code: 200, message: <id del usuario>}.
+   Validaciones: status, esquema de la respuesta, code = 200 y message = id enviado.
+   Variables:    newUser.
+
+2. Buscar el usuario creado (@getUser)
+   Entrada:      GET /user/{username}, con el usuario ya creado.
+   Salida:       200 y el usuario completo.
+   Validaciones: status, esquema del usuario y los 8 campos iguales a los enviados.
+   Variables:    username, newUser.
+
+3. Actualizar el nombre y el correo (@updateUser)
+   Entrada:      PUT /user/{username} con "Daniel Herrera Gomez" y el correo nuevo.
+   Salida:       200 y {code: 200, message: <id del usuario>}.
+   Validaciones: status, esquema de la respuesta, code = 200 y message = id del usuario.
+   Variables:    username, updatedUser.
+
+4. Buscar el usuario actualizado (@getUpdatedUser)
+   Entrada:      GET /user/{username}, con el usuario ya creado y actualizado.
+   Salida:       200 y el usuario con el nombre y el correo nuevos.
+   Validaciones: status, esquema, usuario igual al actualizado; id y username sin cambios.
+   Variables:    username, newUser, updatedUser, updatedEmail.
+
+5. Eliminar el usuario (@deleteUser)
+   Entrada:      DELETE /user/{username} y luego GET /user/{username}.
+   Salida:       DELETE 200 con message = username; GET 404 "User not found".
+   Validaciones: status, esquema, code = 200, message = username y 404 en el GET posterior.
+   Variables:    username.
+
+Las variables se definen una vez, al inicio de cada escenario (Background). El request y el
+response reales de cada caso están en evidencias/karate-reports/ y en
+evidencias/peticiones-y-respuestas.txt.

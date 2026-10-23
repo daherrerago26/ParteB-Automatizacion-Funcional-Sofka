@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Karate Timeline</title>
+    <style>
+      body, html { font-family: arial, sans-serif; font-size: 11pt; }
+      #visualization { box-sizing: border-box; width: 100%; height: 300px; }
+      .vis-item.failed { background-color: #F2928C; }
+      .page-heading { padding: 0.5em; margin-bottom: 0.5em; background-color: lightcyan; border: 1px solid gray; }
+    </style>
+    <script src="res/vis.min.js"></script>
+    <link href="res/vis.min.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <div class="page-heading">
+      <a href="karate-summary.html">Summary</a>
+    </div>     
+    <div id="visualization"></div>
+    <script>
+var groups = [{"content":"Test worker","id":1}];
+var items = [{"id":1,"group":1,"content":"co/com/sofka/petstore/user/user-crud[1:24]","start":1792840546535,"end":1792840547550,"title":"co/com/sofka/petstore/user/user-crud[1:24] 06:15:46.535-06:15:47.550 Create a user"},{"id":2,"group":1,"content":"co/com/sofka/petstore/user/user-crud[2:35]","start":1792840547870,"end":1792840548391,"title":"co/com/sofka/petstore/user/user-crud[2:35] 06:15:47.870-06:15:48.391 Search the created user"},{"id":3,"group":1,"content":"co/com/sofka/petstore/user/user-crud[3:44]","start":1792840548679,"end":1792840549177,"title":"co/com/sofka/petstore/user/user-crud[3:44] 06:15:48.679-06:15:49.177 Update the name and email of the user"},{"id":4,"group":1,"content":"co/com/sofka/petstore/user/user-crud[4:55]","start":1792840549423,"end":1792840550156,"title":"co/com/sofka/petstore/user/user-crud[4:55] 06:15:49.423-06:15:50.156 Search the updated user"},{"id":5,"group":1,"content":"co/com/sofka/petstore/user/user-crud[5:68]","start":1792840550384,"end":1792840551108,"title":"co/com/sofka/petstore/user/user-crud[5:68] 06:15:50.384-06:15:51.108 Delete the user"}];
+</script>
+    <script>
+      var container = document.getElementById('visualization');
+      var timeline = new vis.Timeline(container);
+      timeline.setOptions({groupOrder: 'content'});
+      timeline.setGroups(new vis.DataSet(groups));
+      timeline.setItems(new vis.DataSet(items));
+    </script>
+  </body>
+</html>
