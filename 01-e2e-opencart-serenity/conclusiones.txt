@@ -1,0 +1,77 @@
+EJERCICIO 1 - HALLAZGOS Y CONCLUSIONES
+======================================
+
+RESULTADO
+---------
+El flujo completo de compra como invitado quedó automatizado y en verde: agregar Sony VAIO y
+Samsung Galaxy Tab 10.1 al carrito, validar el carrito, completar el checkout como invitado con
+envío "Flat Shipping Rate" y pago "Cash On Delivery", y validar el mensaje exacto
+"Your order has been placed!".
+
+Después de las correcciones descritas abajo, la prueba pasó 11 veces seguidas: 6 en modo headless
+y 4 con el navegador visible, más la ejecución final de la que salen las evidencias. Cada
+ejecución tarda entre 33 y 56 segundos, según la velocidad del sitio.
+
+
+HALLAZGOS SOBRE EL SITIO
+------------------------
+1. Condición de carrera en el checkout que borra datos de la sesión (defecto).
+   El checkout es un acordeón que carga cada paso por AJAX. Si el usuario pulsa "Continue" en el
+   paso "Delivery Method" mientras el paso "Delivery Details" todavía está cargando, una petición
+   que sigue en curso guarda en la sesión una copia vieja y borra el método de envío recién
+   elegido. Al confirmar, el servidor responde con una redirección
+   (location='.../index.php?route=checkout/checkout') y el checkout vuelve al paso 1 sin explicar
+   por qué.
+   - Evidencia: en las ejecuciones fallidas, la consulta de regiones del paso "Delivery Details"
+     (checkout/checkout/country&country_id=47) terminó después de checkout/shipping_method/save;
+     en las exitosas terminó antes.
+   - Impacto: un usuario rápido, o un doble clic, puede perder el avance del checkout.
+   - Recomendación: bloquear la sesión por petición en el servidor, o deshabilitar los botones
+     "Continue" mientras haya peticiones en curso.
+   - En la prueba se resolvió con una interacción que espera a que no queden peticiones AJAX
+     pendientes antes de cada "Continue" (WaitForPendingRequests). No se usan pausas fijas.
+
+2. Se puede comprar un producto sin stock.
+   Samsung Galaxy Tab 10.1 aparece como "Pre-Order" y el carrito lo marca con *** y el mensaje
+   "Products marked with *** are not available in the desired quantity or not in stock!". Aun
+   así, el sitio deja finalizar la compra. Es una configuración que permite vender productos no
+   disponibles; conviene confirmar si es el comportamiento esperado.
+
+3. Título incorrecto en el carrito.
+   La página del carrito muestra el título "Use Gift Certificate (0.00kg)" en lugar de
+   "Shopping Cart". Es un error de texto visible para el usuario (ver
+   evidencias/capturas/02-carrito-con-dos-productos.png).
+
+4. Mezcla de http y https en el sitio.
+   Las páginas servidas por HTTPS tienen la etiqueta <base> en https, pero la mayoría de sus
+   enlaces siguen en http (en la página de inicio, 58 de 72). Cada clic en esos enlaces obliga
+   al navegador a cambiar de esquema.
+
+5. Tiempos de respuesta muy variables y cortes de conexión.
+   Durante las pruebas la página de inicio tardó entre 1 y 27 segundos, y hubo cortes de
+   conexión puntuales. Por eso la prueba usa esperas explícitas de hasta 30 segundos.
+
+
+HALLAZGO SOBRE EL NAVEGADOR (ENTORNO DE PRUEBA)
+-----------------------------------------------
+Chrome 155 cambia automáticamente las URL http a https (función HTTPS-Upgrades) y no se puede
+desactivar con opciones de línea de comandos. Si el sitio tarda más de unos 5 segundos en
+responder por HTTPS, Chrome vuelve a http y Selenium recibe una página en blanco.
+- Medición: al abrir http://opencart.abstracta.us/ 8 veces, 5 quedaron en blanco a los ~5 s; al
+  abrir https://opencart.abstracta.us/ 8 veces, las 8 cargaron completas.
+- Decisión: la prueba abre directamente https://opencart.abstracta.us/, que es el mismo sitio
+  del enunciado con un certificado válido. La URL se puede cambiar en serenity.conf.
+
+
+CONCLUSIONES
+------------
+- El flujo de compra como invitado funciona de punta a punta y queda cubierto con validaciones
+  en dos puntos: el contenido del carrito y el mensaje exacto de confirmación.
+- El patrón Screenplay separa con claridad qué hace el usuario (tasks), dónde lo hace (targets)
+  y qué se verifica (questions). Los pasos de Gherkin no tienen lógica y los datos viven en el
+  feature, así que cambiar productos o datos del cliente no requiere tocar código.
+- La inestabilidad inicial no venía de la prueba sino del sitio y del navegador. Se diagnosticó
+  con evidencia (capturas, mediciones y el registro de las peticiones AJAX) y se corrigió con
+  esperas por condición, sin pausas fijas.
+- El hallazgo más relevante para el negocio es la condición de carrera del checkout, porque
+  hace que un usuario pierda su pedido sin ningún mensaje.
