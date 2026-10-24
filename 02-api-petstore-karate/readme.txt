@@ -32,6 +32,8 @@ Cada caso es un escenario independiente: se puede ejecutar solo, con su tag.
 
 3. EJECUCIÓN PASO A PASO
 ------------------------
+  Solo este ejercicio:
+
   1) Abrir una terminal en esta carpeta (02-api-petstore-karate).
 
   2) Ejecutar las pruebas:
@@ -65,6 +67,22 @@ Cada caso es un escenario independiente: se puede ejecutar solo, con su tag.
 
      Nota: en PowerShell las propiedades -D deben ir entre comillas; sin comillas PowerShell
      corta el argumento en el punto y Gradle falla.
+
+  Los dos ejercicios juntos (Ejercicio 1 y Ejercicio 2):
+
+  1) Abrir una terminal en la carpeta raíz del repositorio (la carpeta que contiene a esta).
+     El Ejercicio 1 necesita además Google Chrome instalado.
+
+  2) Ejecutar:
+
+       Windows (PowerShell):
+         cd 01-e2e-opencart-serenity; .\gradlew.bat clean test; cd ..\02-api-petstore-karate; .\gradlew.bat clean test; cd ..
+
+       Linux o macOS:
+         (cd 01-e2e-opencart-serenity && ./gradlew clean test); (cd 02-api-petstore-karate && ./gradlew clean test)
+
+  3) Verificar el resultado: cada ejercicio termina con su propio "BUILD SUCCESSFUL" y deja su
+     reporte en su carpeta. El Ejercicio 2 se ejecuta aunque el Ejercicio 1 falle.
 
 
 4. REPORTES
