@@ -1,0 +1,102 @@
+<testsuite failures="0" name="co/com/sofka/petstore/user/user-crud.feature" skipped="0" tests="5" time="3.288036"><testcase classname="co.com.sofka.petstore.user.user-crud" name="Create a user" time="0.823443"><system-out>* url baseUrl ............................................................. passed
+* def identity = call read('data/unique-user.js') ......................... passed
+* def userId = identity.userId ............................................ passed
+* def username = identity.username ........................................ passed
+* def email = identity.email .............................................. passed
+* def updatedEmail = identity.updatedEmail ................................ passed
+* def newUser = read('data/user-create.json') ............................. passed
+* def updatedUser = karate.merge(newUser, read('data/user-update.json')) .. passed
+* def userSchema = read('schemas/user-schema.json') ....................... passed
+* def apiResponseSchema = read('schemas/api-response-schema.json') ........ passed
+* configure afterScenario = function(){ karate.call('common/delete-user.feature', { username: username }) } . passed
+Given path 'user' ......................................................... passed
+And request newUser ....................................................... passed
+When method post .......................................................... passed
+Then status 200 ........................................................... passed
+And match response == apiResponseSchema ................................... passed
+And match response.code == 200 ............................................ passed
+And match response.message == '' + newUser.id ............................. passed
+</system-out></testcase>
+<testcase classname="co.com.sofka.petstore.user.user-crud" name="Search the created user" time="0.514785"><system-out>* url baseUrl ............................................................. passed
+* def identity = call read('data/unique-user.js') ......................... passed
+* def userId = identity.userId ............................................ passed
+* def username = identity.username ........................................ passed
+* def email = identity.email .............................................. passed
+* def updatedEmail = identity.updatedEmail ................................ passed
+* def newUser = read('data/user-create.json') ............................. passed
+* def updatedUser = karate.merge(newUser, read('data/user-update.json')) .. passed
+* def userSchema = read('schemas/user-schema.json') ....................... passed
+* def apiResponseSchema = read('schemas/api-response-schema.json') ........ passed
+* configure afterScenario = function(){ karate.call('common/delete-user.feature', { username: username }) } . passed
+* call read('common/create-user.feature') { user: '#(newUser)' } .......... passed
+Given path 'user', username ............................................... passed
+When method get ........................................................... passed
+Then status 200 ........................................................... passed
+And match response == userSchema .......................................... passed
+And match response == newUser ............................................. passed
+</system-out></testcase>
+<testcase classname="co.com.sofka.petstore.user.user-crud" name="Update the name and email of the user" time="0.496762"><system-out>* url baseUrl ............................................................. passed
+* def identity = call read('data/unique-user.js') ......................... passed
+* def userId = identity.userId ............................................ passed
+* def username = identity.username ........................................ passed
+* def email = identity.email .............................................. passed
+* def updatedEmail = identity.updatedEmail ................................ passed
+* def newUser = read('data/user-create.json') ............................. passed
+* def updatedUser = karate.merge(newUser, read('data/user-update.json')) .. passed
+* def userSchema = read('schemas/user-schema.json') ....................... passed
+* def apiResponseSchema = read('schemas/api-response-schema.json') ........ passed
+* configure afterScenario = function(){ karate.call('common/delete-user.feature', { username: username }) } . passed
+* call read('common/create-user.feature') { user: '#(newUser)' } .......... passed
+Given path 'user', username ............................................... passed
+And request updatedUser ................................................... passed
+When method put ........................................................... passed
+Then status 200 ........................................................... passed
+And match response == apiResponseSchema ................................... passed
+And match response.code == 200 ............................................ passed
+And match response.message == '' + updatedUser.id ......................... passed
+</system-out></testcase>
+<testcase classname="co.com.sofka.petstore.user.user-crud" name="Search the updated user" time="0.73089"><system-out>* url baseUrl ............................................................. passed
+* def identity = call read('data/unique-user.js') ......................... passed
+* def userId = identity.userId ............................................ passed
+* def username = identity.username ........................................ passed
+* def email = identity.email .............................................. passed
+* def updatedEmail = identity.updatedEmail ................................ passed
+* def newUser = read('data/user-create.json') ............................. passed
+* def updatedUser = karate.merge(newUser, read('data/user-update.json')) .. passed
+* def userSchema = read('schemas/user-schema.json') ....................... passed
+* def apiResponseSchema = read('schemas/api-response-schema.json') ........ passed
+* configure afterScenario = function(){ karate.call('common/delete-user.feature', { username: username }) } . passed
+* call read('common/create-user.feature') { user: '#(newUser)' } .......... passed
+* call read('common/update-user.feature') { user: '#(updatedUser)' } ...... passed
+Given path 'user', username ............................................... passed
+When method get ........................................................... passed
+Then status 200 ........................................................... passed
+And match response == userSchema .......................................... passed
+And match response == updatedUser ......................................... passed
+And match response contains { firstName: '#(updatedUser.firstName)', lastName: '#(updatedUser.lastName)', email: '#(updatedEmail)' } . passed
+And match response contains { id: '#(newUser.id)', username: '#(newUser.username)' } . passed
+</system-out></testcase>
+<testcase classname="co.com.sofka.petstore.user.user-crud" name="Delete the user" time="0.722155"><system-out>* url baseUrl ............................................................. passed
+* def identity = call read('data/unique-user.js') ......................... passed
+* def userId = identity.userId ............................................ passed
+* def username = identity.username ........................................ passed
+* def email = identity.email .............................................. passed
+* def updatedEmail = identity.updatedEmail ................................ passed
+* def newUser = read('data/user-create.json') ............................. passed
+* def updatedUser = karate.merge(newUser, read('data/user-update.json')) .. passed
+* def userSchema = read('schemas/user-schema.json') ....................... passed
+* def apiResponseSchema = read('schemas/api-response-schema.json') ........ passed
+* configure afterScenario = function(){ karate.call('common/delete-user.feature', { username: username }) } . passed
+* call read('common/create-user.feature') { user: '#(newUser)' } .......... passed
+Given path 'user', username ............................................... passed
+When method delete ........................................................ passed
+Then status 200 ........................................................... passed
+And match response == apiResponseSchema ................................... passed
+And match response.code == 200 ............................................ passed
+And match response.message == username .................................... passed
+Given path 'user', username ............................................... passed
+When method get ........................................................... passed
+Then status 404 ........................................................... passed
+And match response.message == 'User not found' ............................ passed
+</system-out></testcase>
+</testsuite>
